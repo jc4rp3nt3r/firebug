@@ -1448,14 +1448,35 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
     getSourceLink: function(target, rule)
     {
         var element = rule.parentStyleSheet.ownerNode;
+        var line = getRuleLine(rule);
+        var instance = Css.getInstanceForStyleSheet(rule.parentStyleSheet);
         var href = rule.parentStyleSheet.href;  // Null means inline
 
         // http://code.google.com/p/fbug/issues/detail?id=452
         if (!href)
             href = element.ownerDocument.location.href;
-
-        var line = getRuleLine(rule);
-        var instance = Css.getInstanceForStyleSheet(rule.parentStyleSheet);
+        
+        if (href.indexOf('.less') !== -1) {                                     // if this is a less file
+            var doc = Css.getDocumentForStyleSheet(rule.parentStyleSheet), 
+                styleSheet = doc ? doc.styleSheets[instance] : null;
+            
+            if(styleSheet && this.context.sourceCache) {
+                var regExDotLess = /\/\* ([^:]*):L(\d*) \*\//                   // regex for parsing dotLess Comments. format:  /* /path/css-file.less:L123 */
+                    , iLineIndex = line-1                                       // a counter for the current line index
+                    , arrCss = this.context.sourceCache.load(styleSheet.href);  // handle to the css doc, type = array of text strings per line                
+                
+                while(iLineIndex >= 0 && line - iLineIndex < 5) {               // prevent index out of bounds and stop looking after 5 lines
+                    if (regExDotLess.test(arrCss[iLineIndex])) {
+                        var arrMatch = arrCss[iLineIndex].match(regExDotLess);  
+                        href = arrMatch[1];                                     // Update the handle to the file 
+                        line = arrMatch[2];                                     // and the line based on the comment 
+                        break;   
+                    }
+                    iLineIndex -= 1;
+                }
+            }
+        }
+        
         var sourceLink = new SourceLink.SourceLink(href, line, "css", rule, instance);
 
         return sourceLink;
