@@ -1383,20 +1383,31 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
         if (!href)
             href = element.ownerDocument.location.href;
         
-        if (href.indexOf('.less') !== -1) {                                     // if this is a less file
-            var oDoc = Css.getDocumentForStyleSheet(rule.parentStyleSheet), 
+        var sFileType = (href.indexOf('.less') !== -1) ? 'less' :                           // if this is a less/sass file
+                        (href.indexOf('.sass') !== -1) ? 'sass' : null;
+        if (sFileType) {                                                        
+            var oDoc = Css.getDocumentForStyleSheet(rule.parentStyleSheet),
                 oStyleSheet = oDoc ? oDoc.styleSheets[instance] : null;
             
             if(oStyleSheet && this.context.sourceCache) {
-                var regExDotLess = /\/\* ([^:]*):L(\d*) \*\//                   // regex for parsing dotLess Comments. format:  /* /path/css-file.less:L123 */
-                    , iLineIndex = line-1                                       // a counter for the current line index
-                    , arrCss = this.context.sourceCache.load(oStyleSheet.href); // handle to the css doc, type = array of text strings per line                
-                
-                while(iLineIndex >= 0 && line - iLineIndex < 5) {               // prevent index out of bounds and stop looking after 5 lines
-                    if (regExDotLess.test(arrCss[iLineIndex])) {
-                        var arrMatch = arrCss[iLineIndex].match(regExDotLess);  
-                        href = arrMatch[1];                                     // Update the handle to the file 
-                        line = arrMatch[2];                                     // and the line based on the comment 
+                var iLineIndex = line-1                                                     // a counter for the current line index
+                    , arrCss = this.context.sourceCache.load(oStyleSheet.href)              // handle to the css doc, type = array of text strings per line
+                    , regEx = (sFileType === 'less') ? /\/\* ([^:]*):L(\d*) \*\// :         // regex for parsing dotLess Comments. format:  /* /path/css-file.less:L123 */  
+                                (sFileType === 'sass') ? /\/\* line (\d*), ([^ ]*) \*\// :    // regex for parsing sass Comments. format:  /* line 20, sass/_reset.sass */
+                                null;
+
+                while(iLineIndex >= 0 && line - iLineIndex < 5) {                           // prevent index out of bounds and stop looking after 5 lines
+                    if (regEx.test(arrCss[iLineIndex])) {
+                        var arrMatch = arrCss[iLineIndex].match(regEx);                     // update the file and line numbers for both less and Sass style comments
+                        
+                        if (sFileType === 'less') {
+                            href = arrMatch[1];
+                            line = arrMatch[2];
+                        }
+                        else if (sFileType === 'sass') {
+                            href = arrMatch[2];
+                            line = arrMatch[1];
+                        }
                         break;   
                     }
                     iLineIndex -= 1;
