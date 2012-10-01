@@ -1457,13 +1457,13 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
             href = element.ownerDocument.location.href;
         
         if (href.indexOf('.less') !== -1) {                                     // if this is a less file
-            var doc = Css.getDocumentForStyleSheet(rule.parentStyleSheet), 
-                styleSheet = doc ? doc.styleSheets[instance] : null;
+            var oDoc = Css.getDocumentForStyleSheet(rule.parentStyleSheet), 
+                oStyleSheet = oDoc ? oDoc.styleSheets[instance] : null;
             
-            if(styleSheet && this.context.sourceCache) {
+            if(oStyleSheet && this.context.sourceCache) {
                 var regExDotLess = /\/\* ([^:]*):L(\d*) \*\//                   // regex for parsing dotLess Comments. format:  /* /path/css-file.less:L123 */
                     , iLineIndex = line-1                                       // a counter for the current line index
-                    , arrCss = this.context.sourceCache.load(styleSheet.href);  // handle to the css doc, type = array of text strings per line                
+                    , arrCss = this.context.sourceCache.load(oStyleSheet.href); // handle to the css doc, type = array of text strings per line                
                 
                 while(iLineIndex >= 0 && line - iLineIndex < 5) {               // prevent index out of bounds and stop looking after 5 lines
                     if (regExDotLess.test(arrCss[iLineIndex])) {
