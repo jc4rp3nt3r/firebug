@@ -1383,22 +1383,28 @@ Firebug.CSSStyleSheetPanel.prototype = Obj.extend(Firebug.Panel,
         if (!href)
             href = element.ownerDocument.location.href;
         
-        var sFileType = (href.indexOf('.less') !== -1) ? 'less' :                           // if this is a less/sass file
+        // if this is a less/sass file
+        var sFileType = (href.indexOf('.less') !== -1) ? 'less' :
                         (href.indexOf('.sass') !== -1) ? 'sass' : null;
         if (sFileType) {                                                        
             var oDoc = Css.getDocumentForStyleSheet(rule.parentStyleSheet),
                 oStyleSheet = oDoc ? oDoc.styleSheets[instance] : null;
             
             if(oStyleSheet && this.context.sourceCache) {
-                var iLineIndex = line-1                                                     // a counter for the current line index
-                    , arrCss = this.context.sourceCache.load(oStyleSheet.href)              // handle to the css doc, type = array of text strings per line
-                    , regEx = (sFileType === 'less') ? /\/\* ([^:]*):L(\d*) \*\// :         // regex for parsing dotLess Comments. format:  /* /path/css-file.less:L123 */  
-                                (sFileType === 'sass') ? /\/\* line (\d*), ([^ ]*) \*\// :    // regex for parsing sass Comments. format:  /* line 20, sass/_reset.sass */
-                                null;
-
-                while(iLineIndex >= 0 && line - iLineIndex < 5) {                           // prevent index out of bounds and stop looking after 5 lines
+                // a counter for the current line index
+                var iLineIndex = line-1;
+                // handle to the css doc, type = array of text strings per line
+                var arrCss = this.context.sourceCache.load(oStyleSheet.href);
+                // dotLess format: /* /path/css-file.less:L123 */ sass format:  /* line 20, sass/_reset.sass */
+                var regEx = (sFileType === 'less') ? /\/\* ([^:]*):L(\d*) \*\// :
+                            (sFileType === 'sass') ? /\/\* line (\d*), ([^ ]*) \*\// :
+                            null;
+                
+                // prevent index out of bounds and stop looking after 5 lines
+                while(iLineIndex >= 0 && line - iLineIndex < 5) {
                     if (regEx.test(arrCss[iLineIndex])) {
-                        var arrMatch = arrCss[iLineIndex].match(regEx);                     // update the file and line numbers for both less and Sass style comments
+                        // update the file and line numbers for both less and Sass style comments
+                        var arrMatch = arrCss[iLineIndex].match(regEx);
                         
                         if (sFileType === 'less') {
                             href = arrMatch[1];
